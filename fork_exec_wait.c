@@ -1,35 +1,21 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
-
-int main(void) {
-    pid_t pid = fork();
-
-    if (pid < 0) {
-        perror("fork failed");
-        return 1;
-    }
-
-    if (pid == 0) {
-        printf("Child process created.\n");
-        printf("Child PID: %d\n", getpid());
-
-        execlp("ls", "ls", "-l", (char *)NULL);
-
-        perror("exec failed");
-        _exit(1);
-    } else {
-        printf("Parent process waiting for child...\n");
-
-        int status;
-        if (wait(&status) == -1) {
-            perror("wait failed");
-            return 1;
-        }
-
-        printf("Child process completed.\n");
-    }
-
-    return 0;
-}
+#include <errno.h> 
+#include <stdio.h> 
+#include <stdlib.h> 
+#include <sys/types.h> 
+#include <sys/wait.h> 
+#include <unistd.h> 
+int main(void) { 
+    pid_t pid = fork(); 
+    if (pid < 0) { perror("fork"); return EXIT_FAILURE; } 
+    if (pid == 0) { 
+        puts("Child: executing /bin/echo"); 
+        execl("/bin/echo", "echo", "Hello from exec", (char *)NULL); 
+        perror("execl"); 
+        _exit(127); 
+    } 
+    int status; 
+    if (waitpid(pid, &status, 0) < 0) { perror("waitpid"); return EXIT_FAILURE; } 
+    if (WIFEXITED(status)) 
+        printf("Parent: child exit status = %d\n", WEXITSTATUS(status)); 
+    return EXIT_SUCCESS; 
+} 
